@@ -1,0 +1,16 @@
+[
+{
+  "modid": "entityarmorsetter",
+  "name": "[SBM] Entity Armor Setter",
+  "description": "Small additions to allow easily settings the armor of entities",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["DarkCow"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
