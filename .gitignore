@@ -16,3 +16,9 @@ build/
 run/
 
 out/
+
+output/
+
+CompiledWith\.txt
+
+changelog\.html
