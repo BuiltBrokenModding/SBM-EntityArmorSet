@@ -2,3 +2,17 @@
 \.DS_Store
 
 *.iml
+
+SBM-EntityArmorSetter\.txt
+
+SBM-EntityArmorSet\.iws
+
+SBM-EntityArmorSet\.ipr
+
+build/
+
+\.gradle/
+
+run/
+
+out/
