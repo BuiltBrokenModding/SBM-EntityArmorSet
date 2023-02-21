@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Created by Dark(DarkGuardsman, Robert) on 2019-05-06.
+ * Created by Dark(DarkGuardsman, Robin) on 2019-05-06.
  */
 @Mod(modid = EntityArmorSetter.MOD_ID, name = "[SBM] Entity Armor Setter", version = EntityArmorSetter.VERSION)
 @Mod.EventBusSubscriber

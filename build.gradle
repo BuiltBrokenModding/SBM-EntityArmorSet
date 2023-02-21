@@ -1,69 +1,138 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-    }
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-    }
-}
-
 plugins {
-  //Applies the Build scan plugin so i can upload issues easily and link to gradle devs
-  //id 'com.gradle.build-scan' version '1.4'
-  //applies CurseGradle plugin for uploading to CurseForge
-  id "com.matthewprenger.cursegradle" version "1.1.0"
-  // id "net.saliman.cobertura" version "2.5.3"
-  // id "com.github.kt3k.coveralls" version "2.8.2"
-  //id "com.github.johnrengelman.shadow" version "1.2.2"
-  id "net.franz-becker.gradle-lombok" version "1.3"
-  id 'com.jfrog.bintray' version '1.1'
-  //Applies the changelog pluginid 
-  id "se.bjurr.gitchangelog.git-changelog-gradle-plugin" version "1.55"
-  id "org.ajoberstar.grgit" version "2.1.0"
+    id 'eclipse'
+    //https://github.com/JetBrains/gradle-idea-ext-plugin/wiki#delegating-runbuild-and-test-actions
+    id 'org.jetbrains.gradle.plugin.idea-ext' version "1.1.7"
+    id 'net.minecraftforge.gradle' version '5.1.+'
+    id 'wtf.gofancy.fancygradle' version '1.1.+'
 }
 
-apply from: 'https://raw.githubusercontent.com/BuiltBrokenModding/BuiltBrokenScripts/1.12.2/index/index.gradle'
+version = '1.0'
+group = 'com.builtbroken.sbm.armorsetter'
+archivesBaseName = 'SBM-ArmorSetter'
 
-dependencies 
-{
-    testCompile 'junit:junit:4.11'
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+
+fancyGradle {
+    patches {
+        //https://gitlab.com/gofancy/fancygradle/-/wikis/IDE-Specific-Runs
+        resources
+        coremods
+        asm
+        mergetool
+    }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+idea {
+    module {
+        outputDir = compileJava.destinationDir
+        testOutputDir = compileTestJava.destinationDir
+        inheritOutputDirs = true
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
 
+import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.PLATFORM
+
+idea.project.settings {
+    delegateActions {
+        delegateBuildRunToGradle = false
+        testRunner = PLATFORM
+    }
+}
+
+minecraft {
+    mappings channel: 'snapshot', version: '20171003-1.12'
+
+    //accessTransformer = file('src/main/resources/META-INF/NBTTool_at.cfg')
+    runs {
+        client {
+            workingDirectory project.file('run/client')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+        }
+
+        server {
+            workingDirectory project.file('run/server')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+
+    maxHeapSize = '1G'
+    failFast = false
+    workingDir = './run/tests'
+    mkdir './run/tests'
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2859'
+
+    //Junit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+
+    //Mockito
+    testImplementation 'org.mockito:mockito-inline:4.3.1'
+    testImplementation 'org.mockito:mockito-core:4.3.1'
+}
+
+// Example for how to get properties into the manifest for reading by the runtime..
 jar {
-     manifest.mainAttributes(
-            "Built-By": System.getProperty('user.name'),
-            "Created-By": project.CurrentJVM,
-            "Implementation-Title": archivesBaseName,
-            "Implementation-Version": project.version,
-            "Git-Hash": project.GitHash)
+    manifest {
+        attributes([
+            "Specification-Title": "SBM - Armor Title",
+            "Specification-Vendor": "Built Broken Modding & Gaming",
+            "Specification-Version": "1", // We are version 1 of ourselves
+            "Implementation-Title": project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" :"Built Broken Modding & Gaming",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
 }
 
-deobfJar {
-     manifest.mainAttributes(
-            "Built-By": System.getProperty('user.name'),
-            "Created-By": project.CurrentJVM,
-            "Implementation-Title": archivesBaseName,
-            "Implementation-Version": project.version,
-            "Git-Hash": project.GitHash)
+jar.finalizedBy('reobfJar')
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+
+    description = 'Creates a JAR containing the source code.'
+    from sourceSets.main.allSource
+    classifier = 'sources'
 }
 
-sourcesJar {
-     manifest.mainAttributes(
-            "Built-By": System.getProperty('user.name'),
-            "Created-By": project.CurrentJVM,
-            "Implementation-Title": archivesBaseName,
-            "Implementation-Version": project.version,
-            "Git-Hash": project.GitHash)
+task javadocJar(type: Jar, dependsOn: javadoc) {
+
+    description = 'Creates a JAR containing the JavaDocs.'
+    from javadoc.destinationDir
+    classifier = 'javadoc'
 }
+
+task deobfJar(type: Jar) {
+
+    description = 'Creates a JAR containing the non-obfuscated compiled code.'
+    from sourceSets.main.output
+    classifier = "deobf"
+}
+
+task forgelibJar(type: Jar) {
+    description = 'Creates a compiled JAR which also contains raw sources.'
+    from sourceSets.main.output
+    from sourceSets.main.allJava
+    classifier = 'forgelib'
+}
+
+//Adds the artifact types added by this script to the actual artifacts list.
+artifacts {
+
+    archives sourcesJar
+    archives javadocJar
+    archives deobfJar
+    archives forgelibJar
+}
+

@@ -22,3 +22,5 @@ output/
 CompiledWith\.txt
 
 changelog\.html
+
+.idea/
